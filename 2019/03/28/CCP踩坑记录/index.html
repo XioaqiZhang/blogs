@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content>
+    <meta name="keyword" content>
+    <link rel="shortcut icon" href="/blogs/img/favicon.ico">
+
+    <title>
+        
+        CCP踩坑记录 - undefined
+        
+    </title>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/blogs/css/aircloud.css">
+    <link rel="stylesheet" href="/blogs/css/gitment.css">
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i>  </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar">
+            <img src="/blogs/img/dog.jpg">
+        </div>
+        <div class="name">
+            <i>No.7 ears</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li>
+                <a href="/blogs/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>主页</span>
+                </a>
+            </li>
+            <li>
+                <a href="/blogs/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>标签</span>
+                </a>
+            </li>
+            <li>
+                <a href="/blogs/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>存档</span>
+                </a>
+            </li>
+            <li>
+                <a href="/blogs/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>关于</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么移植CCP"><span class="toc-text">为什么移植CCP</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#简要介绍"><span class="toc-text">简要介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码移植"><span class="toc-text">代码移植</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#主设备如何访问ECU"><span class="toc-text">主设备如何访问ECU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#后记"><span class="toc-text">后记</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input">
+            <span id="begin-search">搜索</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+        <div class="index-about-mobile">
+            <i>  </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        CCP踩坑记录
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2019-03-28 22:20:26</span></span>
+        
+        
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+
+    </div>
+    <div class="post-content ">
+        <h2 id="为什么移植CCP"><a href="#为什么移植CCP" class="headerlink" title="为什么移植CCP"></a>为什么移植CCP</h2><p> 我所在的公司做新能源汽车的动力系统集成，行业内CCP应用较为广泛，故移植CCP。第一为贴近行业前沿，第二为适配主机厂家ECU做准备。主要做的工作就是使用CCP协议替换掉之前自定义的上、下位机通讯协议。</p>
+<h2 id="简要介绍"><a href="#简要介绍" class="headerlink" title="简要介绍"></a>简要介绍</h2><p>在标定系统中，上位机和下位机的通信方式有很多种，其中CCP就是符合ASAM标准的应用非常广泛的一种。<br>CCP（CAN calibration protocol）协议采用主从通信方式，即只有一台主设备，而从设备（被标定的ECU）可以有多个，在同一时刻主设备只能与其中的某一个从设备直接进行会话。当两者建立连接后，主设备再发送的命令其他从设备依然可以接收，但是只有处于连接状态的ECU才会对报文做出响应。通信结束后，主设备发送断开连接命令，才能与其他设备进行会话。<br><img src="https://t1.picb.cc/uploads/2019/03/28/VS6E8D.png" alt="1">  </p>
+<ol>
+<li><p><strong>CCP报文帧</strong>  </p>
+<blockquote>
+<p>CCP协议含有两种报文帧，即接收和发送，其ID由用户自行定义。命令和数据则通过8Byte的报文数据来进行交互，由主设备发出的普通命令均要求从设备反馈握手信息，握手信息中包含命令的返回码和错误码。</p>
+</blockquote>
+<ul>
+<li>命令接收报文（<strong>CRO</strong>）  <blockquote>
+<p>CRO（command receive object）用于主设备向从设备发送命令。报文的第一字节代表命令（CMD）。报文的第二字节表示命令计数器CTR（command counter）,用于记录当前命令执行次数。其余的6个字节表示命令参数。从设备每接收到一条命令后，必须返回一个ODT帧。</p>
+</blockquote>
+</li>
+<li>命令发送报文（<strong>DTO</strong>）  <blockquote>
+<p>DTO（data transmission object）用于从设备向主设备发送信息。DTO共有以下三种形式：</p>
+<ol>
+<li>CRM（command return message）:CRO报文反馈。</li>
+<li>Event Message:当从设备内部发生处理错误（繁忙、等待、丢失等）时，从设备自行向主设备发送，报告状态，请求暂缓当前命令进程。</li>
+<li>DAQ-DTO（data acquisition-DTO）:用于DAQ模式，由从设备向主设备以固定周期发送。</li>
+</ol>
+</blockquote>
+</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>关于接收发送报文的每个字节对应的是什么意义，“CCP21.PDF”这个文档中有详细的说明，文档的位置在源码包解压后的“CCP/DOC/”文件夹下。<br>另外，以上介绍的所有信息在“CCP/DOC”文件夹下的文档中都可以找到依据，我只是把我觉得比较重要的点提取出来。</p>
+</blockquote>
+<ol start="2">
+<li><strong>DAQ模式</strong>  <blockquote>
+<p>DAQ模式是从设备以固定周期向主设备自动上传数据的一种高效采集模式。在DAQ模式下，主设备通过命令设置主动上传数据的地址和相关信息，之后发送开始命令，从设备开始上传数据。</p>
+</blockquote>
+</li>
+</ol>
+<h2 id="代码移植"><a href="#代码移植" class="headerlink" title="代码移植"></a>代码移植</h2><p>网上找到Vector的开源代码，抛开硬件平台相关的东西不谈，CCP源码文件主要有三个:   </p>
+<blockquote>
+<blockquote>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>文件名</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CRC.C</td>
+<td>Vector提供的CCP Driver的源代码    </td>
+</tr>
+<tr>
+<td>CCP.H</td>
+<td>CCP Driver的头文件</td>
+</tr>
+<tr>
+<td>CCPPAR.h</td>
+<td>CCP Driver的配置文件</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>我的移植是在<strong><em>stm32f407</em></strong>上实现的，创建文件<br> <code>CCPInterface.c</code> :<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">void CCPInterfaceInit(void)</span><br><span class="line">&#123;    </span><br><span class="line">    //初始化CRO，即从设备接收ID</span><br><span class="line">   DEBUG_CAN_HalInit(CCP_CRO_ID, 0xFFFFFFFF, &amp;DebugRevHandler, &amp;pRxMsg, &amp;pTxMsg);</span><br><span class="line">    //调用CCP初始化</span><br><span class="line">   ccpInit();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void CCPInterfaceIRQCalc(void)</span><br><span class="line">&#123;</span><br><span class="line">   if(CAN_GetFlagStatus(DEBUG_CAN_PORT,CAN_FLAG_RQCP0|CAN_FLAG_RQCP1|CAN_FLAG_RQCP2))</span><br><span class="line">   &#123;</span><br><span class="line">     //接收到主设备发来的报文，调用该函数解析</span><br><span class="line">      ccpSendCallBack();</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void CCPInterface1msCalc(void)</span><br><span class="line">&#123;</span><br><span class="line">   //1ms事件 用于RAM数据的循环显示  这里的1表示通道事件编号为1，</span><br><span class="line">   //对应主设备发来的CC_START_STOP命令帧的byte5 该帧的详细信息后面会有说到</span><br><span class="line">      //每个通道事件编号对应唯一的DAQ发送周期</span><br><span class="line">   ccpDaq(1);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void CCPInterface50msCalc(void)</span><br><span class="line">&#123;</span><br><span class="line">   //50ms事件  用于波形显示时其他数据显示</span><br><span class="line">   ccpDaq(2);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/*! \fn        void ccpSend(CCP_BYTEPTR msg )</span><br><span class="line"> *  \brief     定义ccpSend以供CCPdriver调用</span><br><span class="line"> *  \param     none</span><br><span class="line"> *  \return    none</span><br><span class="line"> */</span><br><span class="line">void ccpSend(CCP_BYTEPTR msg )</span><br><span class="line">&#123;</span><br><span class="line">   pTxMsg-&gt;ExtId = CCP_DTO_ID;</span><br><span class="line">   pTxMsg-&gt;RTR = CAN_RTR_DATA;</span><br><span class="line">   pTxMsg-&gt;IDE = CAN_ID_EXT;</span><br><span class="line">   pTxMsg-&gt;DLC = 8;</span><br><span class="line"></span><br><span class="line">   pTxMsg-&gt;Data[0] = msg[0];</span><br><span class="line">   pTxMsg-&gt;Data[1] = msg[1];</span><br><span class="line">   pTxMsg-&gt;Data[2] = msg[2];</span><br><span class="line">   pTxMsg-&gt;Data[3] = msg[3];</span><br><span class="line">   pTxMsg-&gt;Data[4] = msg[4];</span><br><span class="line">   pTxMsg-&gt;Data[5] = msg[5];</span><br><span class="line">   pTxMsg-&gt;Data[6] = msg[6];</span><br><span class="line">   pTxMsg-&gt;Data[7] = msg[7];</span><br><span class="line"></span><br><span class="line">   DEBUG_CAN_TxMessage();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void ccpUserBackground( void )</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">CCP_MTABYTEPTR ccpGetPointer(CCP_BYTE ext, CCP_DWORD addr )</span><br><span class="line">&#123;</span><br><span class="line">   CCP_BYTE ext_local;</span><br><span class="line">   //伪读取，防止警告</span><br><span class="line">   ext_local = ext;</span><br><span class="line">   ext = ext_local;</span><br><span class="line">   return (CCP_MTABYTEPTR)addr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>对于 <code>CCP.H</code>修改:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define CCP_INTEL  // CCP_MOTOROLA 这个根据你硬件平台是大端还是小端进行修改</span><br><span class="line">#define CCP_WRITE_EEPROM  //如果你需要通过CCP对EE进行读写，这个宏要打开</span><br></pre></td></tr></table></figure></p>
+<p>对于 <code>CCPPAR.H</code>修改：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#define CCP_STATION_ID    &quot;ECU00001&quot;  /* Plug&amp;Play station identification */</span><br><span class="line"></span><br><span class="line">#define CCP_DTO_ID        0x100000A           /* CAN identifier ECU -&gt; Master */</span><br><span class="line">#define CCP_CRO_ID        0x100000C           /* CAN identifier Master -&gt; ECU */</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">/*----------------------------------------------------------------------------*/</span><br><span class="line">/* CCP Data Acuisition Parameters */</span><br><span class="line"></span><br><span class="line">#define CCP_DAQ                   /* Enable synchronous data aquisition in ccpDaq() */</span><br><span class="line">#define CCP_MAX_ODT 60            /* Number of ODTs in each DAQ lists   每个DAQList的ODT数目不超过60个 */</span><br><span class="line">#define CCP_MAX_DAQ 2             /* Number of DAQ lists    DAQList的个数不超过2个，原因暂时未知*/</span><br></pre></td></tr></table></figure></p>
+<p><strong>至此，CCP的底层代码移植完成。</strong></p>
+<h2 id="主设备如何访问ECU"><a href="#主设备如何访问ECU" class="headerlink" title="主设备如何访问ECU"></a>主设备如何访问ECU</h2><ul>
+<li>单个数据访问<blockquote>
+<p>主设备对ECU的单个数据访问很简单，执行以下步骤即可：<br>CONNECT -&gt;  交换ID -&gt; 设置内存传输地址 -&gt; 访问ECU数据</p>
+</blockquote>
+</li>
+<li>主设备对ECU设置DAQ   <blockquote>
+<p>上位机对某个ECU设置DAQ应该按下图所示执行。  </p>
+</blockquote>
+</li>
+</ul>
+<p><div align="center"><img src="https://t1.picb.cc/uploads/2019/03/28/VSIAYJ.png" width="20%" height="20%"></div></p>
+<p><strong>命令详解：</strong></p>
+<ol>
+<li><code>connect</code></li>
+<li><code>CC_GET_DAQ_SIZE</code><br>com[2]     &thinsp;   为DAQList number<br>com[4..7]  &thinsp;   DTO专用列表编号标识符(没用到)<br>crm[3]     &thinsp;   为该DAQList的大小<br>crm[4]     &thinsp;   为第一个ODT的PID</li>
+<li><code>SET_DAQ_PTR</code><br>com[2]     &thinsp;   设置DAQList number<br>com[3]     &thinsp;   设置哪个ODT<br>com[4]     &thinsp;   哪个字节  </li>
+<li><code>CC_WRITE_DAQ</code><br>com[2]     &thinsp;   设置DAQList的大小(这里只能为1)<br>com[4..7]  &thinsp;   DAQList的入口地址()  </li>
+<li><code>CC_START_STOP</code><br>com[2]     &thinsp;   start(0)/stop(1)<br>com[3]     &thinsp;   DAQList number<br>com[4]     &thinsp;   最后一个ODT的编号<br>com[5]     &thinsp;   Event Channel number（目前为1）<br>com[6..7]  &thinsp;   DAQList 的周期  （<strong><em>例：com[6..7] = 1 周期为10ms  com[6..7] = 2 周期为20ms</em></strong> ）  </li>
+</ol>
+<p>其中：<br> <strong>com[0..7] 表示上位机发给ECU的数据</strong><br> <strong>crm[0..7] 表示ECU返回给上位机的数据</strong></p>
+<p><strong>举个栗子：</strong><br>设置<code>DAQList1</code>的<code>ODT0</code>装载u32数据0xadcd5678,周期为1S，触发事件编号为<code>1</code>，起始地址为<code>0xd000 0000</code><br>则上位机的执行顺序应如下，这里的数据省略显示了每个命令的第0个字节</p>
+<ol>
+<li><p><code>connect</code></p>
+</li>
+<li><p><code>GET_DAQ_SIZE</code><br>0x550100 00000000<br>DAQList number = 1</p>
+</li>
+<li><p><code>SET_DAQ_PTR</code><br>0x550100 00000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 0</p>
+</li>
+<li><p><code>WRITE_DAQ</code><br>0x550100 000000d0<br>DAQList Size = 1<br>addr = 0xd000 0000  </p>
+</li>
+<li><p><code>SET_DAQ_PTR</code><br>0x550100 01000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 1</p>
+</li>
+<li><p><code>WRITE_DAQ</code><br>0x550100 010000d0<br>DAQList Size = 1<br>addr = 0xd000 0001  </p>
+</li>
+<li><p><code>SET_DAQ_PTR</code><br>0x550100 02000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 2</p>
+</li>
+<li><p><code>WRITE_DAQ</code><br>0x550100 020000d0<br>DAQList Size = 1<br>addr = 0xd000 0002  </p>
+</li>
+<li><p><code>SET_DAQ_PTR</code><br>0x550100 03000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 3  </p>
+</li>
+<li><p><code>WRITE_DAQ</code><br>0x550100 030000d0<br>DAQList Size = 1<br>addr = 0xd000 0003  </p>
+</li>
+<li><p><code>START_STOP</code><br>0x550101 00016400<br>Command ：开始<br>DAQList number = 1<br>LastODT = 0<br>事件编号 ：1<br>周期（0064） ：10ms <em> 100 = 1S    这里的100，是因为在ECU中，ccpdaq(1)这个函数是每10ms调用一次，如果该函数1ms调用一次，则数据上传的周期为 1ms </em> 100 = 100ms</p>
+</li>
+</ol>
+<p>经过上面一系列命令后，上位机接收到的数据为：<br><code>0x 3c 78 56 cd ad 00 00 00</code>,周期为1s<br>若要再添加数据，可以在DAQList1中更改ODTNum，循环使用3 - 10的命令，即可设置，只是要注意ODTNum的上限在<code>CCPPAR.H</code>中已经定义，不要超出</p>
+<p>由上面的栗子可知：<strong>数据周期与DAQList编号绑定，如果想要不同周期的数据，在发送start/stop命令时，同时更改DAQList编号和周期数据即可，当然相应的ECU中要有对该编号的<code>ccpdaq()</code>函数调用，其参数为DAQList编号。</strong>  </p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>我的这次移植也没有完全使用CCP的所有功能，例如程序的烧写、数据传输过程中的CRC校验、主从设备连接之前的秘钥校验等几个功能就没有实现。但是有了这次移植的基础，后续如果需要相关的功能，应该能使用较短的时间实现。<br>源码中实际上还有一些数据类型转换不规范，导致编译器报警告，时间的原因就没有去处理。如果你恰巧看到了这篇文章也要做同样的事情，建议阅读源码之前多去看看源码包里的文档，对程序结构的梳理很有帮助。</p>
+
+        
+        <br>
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        
+        <li>
+            <a target="_blank" href="https://www.zhihu.com/people/�ȶ��Ƿ�">
+                            <span class="fa-stack fa-lg">
+                                 <i class="iconfont icon-zhihu"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+        <li>
+            <a target="_blank" href="http://weibo.com/603228547@qq.com">
+                            <span class="fa-stack fa-lg">
+                                  <i class="iconfont icon-weibo"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+        
+        <li>
+            <a target="_blank" href="https://github.com/XioaqiZhang">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-github"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+    </ul>
+    
+    <p>
+        <span id="busuanzi_container_site_pv">
+            <span id="busuanzi_value_site_pv"></span>PV
+        </span>
+        <span id="busuanzi_container_site_uv">
+            <span id="busuanzi_value_site_uv"></span>UV
+        </span>
+        Created By <a href="https://hexo.io/">Hexo</a>  Theme <a href="https://github.com/aircloud/hexo-theme-aircloud">AirCloud</a></p>
+</footer>
+
+
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = ""
+    window.hexo_root = "/blogs/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script src="/blogs/js/index.js"></script>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+</html>
