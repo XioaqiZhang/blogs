@@ -123,7 +123,7 @@
 </span>
 
     </div>
-    <div class="post-content ">
+    <div class="post-content no-indent">
         <h2 id="为什么移植CCP"><a href="#为什么移植CCP" class="headerlink" title="为什么移植CCP"></a>为什么移植CCP</h2><p> 我所在的公司做新能源汽车的动力系统集成，行业内CCP应用较为广泛，故移植CCP。第一为贴近行业前沿，第二为适配主机厂家ECU做准备。主要做的工作就是使用CCP协议替换掉之前自定义的上、下位机通讯协议。</p>
 <h2 id="简要介绍"><a href="#简要介绍" class="headerlink" title="简要介绍"></a>简要介绍</h2><p>在标定系统中，上位机和下位机的通信方式有很多种，其中CCP就是符合ASAM标准的应用非常广泛的一种。<br>CCP（CAN calibration protocol）协议采用主从通信方式，即只有一台主设备，而从设备（被标定的ECU）可以有多个，在同一时刻主设备只能与其中的某一个从设备直接进行会话。当两者建立连接后，主设备再发送的命令其他从设备依然可以接收，但是只有处于连接状态的ECU才会对报文做出响应。通信结束后，主设备发送断开连接命令，才能与其他设备进行会话。<br><img src="https://t1.picb.cc/uploads/2019/03/28/VS6E8D.png" alt="1">  </p>
 <ol>
@@ -201,38 +201,100 @@
 <p><div align="center"><img src="https://t1.picb.cc/uploads/2019/03/28/VSIAYJ.png" width="20%" height="20%"></div></p>
 <p><strong>命令详解：</strong></p>
 <ol>
-<li><code>connect</code></li>
-<li><code>CC_GET_DAQ_SIZE</code><br>com[2]     &thinsp;   为DAQList number<br>com[4..7]  &thinsp;   DTO专用列表编号标识符(没用到)<br>crm[3]     &thinsp;   为该DAQList的大小<br>crm[4]     &thinsp;   为第一个ODT的PID</li>
-<li><code>SET_DAQ_PTR</code><br>com[2]     &thinsp;   设置DAQList number<br>com[3]     &thinsp;   设置哪个ODT<br>com[4]     &thinsp;   哪个字节  </li>
-<li><code>CC_WRITE_DAQ</code><br>com[2]     &thinsp;   设置DAQList的大小(这里只能为1)<br>com[4..7]  &thinsp;   DAQList的入口地址()  </li>
-<li><code>CC_START_STOP</code><br>com[2]     &thinsp;   start(0)/stop(1)<br>com[3]     &thinsp;   DAQList number<br>com[4]     &thinsp;   最后一个ODT的编号<br>com[5]     &thinsp;   Event Channel number（目前为1）<br>com[6..7]  &thinsp;   DAQList 的周期  （<strong><em>例：com[6..7] = 1 周期为10ms  com[6..7] = 2 周期为20ms</em></strong> ）  </li>
+<li><p><strong>connect</strong></p>
+</li>
+<li><p><strong>CC_GET_DAQ_SIZE</strong>   </p>
+</li>
 </ol>
-<p>其中：<br> <strong>com[0..7] 表示上位机发给ECU的数据</strong><br> <strong>crm[0..7] 表示ECU返回给上位机的数据</strong></p>
+<blockquote>
+<p>com[2]     &thinsp;   为DAQList number<br>com[4..7]  &thinsp;   DTO专用列表编号标识符(没用到)<br>crm[3]     &thinsp;   为该DAQList的大小<br>crm[4]     &thinsp;   为第一个ODT的PID</p>
+</blockquote>
+<ol start="3">
+<li><strong>SET_DAQ_PTR</strong>  </li>
+</ol>
+<blockquote>
+<p>com[2]     &thinsp;   设置DAQList number<br>com[3]     &thinsp;   设置哪个ODT<br>com[4]     &thinsp;   哪个字节  </p>
+</blockquote>
+<ol start="4">
+<li><strong>CC_WRITE_DAQ</strong>  </li>
+</ol>
+<blockquote>
+<p>com[2]     &thinsp;   设置DAQList的大小(这里只能为1)<br>com[4..7]  &thinsp;   DAQList的入口地址()  </p>
+</blockquote>
+<ol start="5">
+<li><strong>CC_START_STOP</strong>  </li>
+</ol>
+<blockquote>
+<p>com[2]     &thinsp;   start(0)/stop(1)<br>com[3]     &thinsp;   DAQList number<br>com[4]     &thinsp;   最后一个ODT的编号<br>com[5]     &thinsp;   Event Channel number（目前为1）<br>com[6..7]  &thinsp;   DAQList 的周期<br>（<strong><em>例：com[6..7] = 1 周为10ms  com[6..7] = 2 周期为20ms</em></strong> ）  </p>
+</blockquote>
+<p>其中：  </p>
+<blockquote>
+<p><strong>com[0..7] 表示上位机发给ECU的数据</strong><br><strong>crm[0..7] 表示ECU返回给上位机的数据</strong></p>
+</blockquote>
 <p><strong>举个栗子：</strong><br>设置<code>DAQList1</code>的<code>ODT0</code>装载u32数据0xadcd5678,周期为1S，触发事件编号为<code>1</code>，起始地址为<code>0xd000 0000</code><br>则上位机的执行顺序应如下，这里的数据省略显示了每个命令的第0个字节</p>
 <ol>
-<li><p><code>connect</code></p>
+<li><p><strong>connect</strong></p>
 </li>
-<li><p><code>GET_DAQ_SIZE</code><br>0x550100 00000000<br>DAQList number = 1</p>
-</li>
-<li><p><code>SET_DAQ_PTR</code><br>0x550100 00000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 0</p>
-</li>
-<li><p><code>WRITE_DAQ</code><br>0x550100 000000d0<br>DAQList Size = 1<br>addr = 0xd000 0000  </p>
-</li>
-<li><p><code>SET_DAQ_PTR</code><br>0x550100 01000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 1</p>
-</li>
-<li><p><code>WRITE_DAQ</code><br>0x550100 010000d0<br>DAQList Size = 1<br>addr = 0xd000 0001  </p>
-</li>
-<li><p><code>SET_DAQ_PTR</code><br>0x550100 02000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 2</p>
-</li>
-<li><p><code>WRITE_DAQ</code><br>0x550100 020000d0<br>DAQList Size = 1<br>addr = 0xd000 0002  </p>
-</li>
-<li><p><code>SET_DAQ_PTR</code><br>0x550100 03000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 3  </p>
-</li>
-<li><p><code>WRITE_DAQ</code><br>0x550100 030000d0<br>DAQList Size = 1<br>addr = 0xd000 0003  </p>
-</li>
-<li><p><code>START_STOP</code><br>0x550101 00016400<br>Command ：开始<br>DAQList number = 1<br>LastODT = 0<br>事件编号 ：1<br>周期（0064） ：10ms <em> 100 = 1S    这里的100，是因为在ECU中，ccpdaq(1)这个函数是每10ms调用一次，如果该函数1ms调用一次，则数据上传的周期为 1ms </em> 100 = 100ms</p>
+<li><p><strong>GET_DAQ_SIZE</strong></p>
 </li>
 </ol>
+<blockquote>
+<p>0x550100 00000000<br>DAQList number = 1  </p>
+</blockquote>
+<ol start="3">
+<li><strong>SET_DAQ_PTR</strong></li>
+</ol>
+<blockquote>
+<p>0x550100 00000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 0</p>
+</blockquote>
+<ol start="4">
+<li><strong>WRITE_DAQ</strong>  </li>
+</ol>
+<blockquote>
+<p>0x550100 000000d0<br>DAQList Size = 1<br>addr = 0xd000 0000  </p>
+</blockquote>
+<ol start="5">
+<li><strong>SET_DAQ_PTR</strong>  </li>
+</ol>
+<blockquote>
+<p>0x550100 01000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 1</p>
+</blockquote>
+<ol start="6">
+<li><strong>WRITE_DAQ</strong>  </li>
+</ol>
+<blockquote>
+<p>0x550100 010000d0<br>DAQList Size = 1<br>addr = 0xd000 0001  </p>
+</blockquote>
+<ol start="7">
+<li><strong>SET_DAQ_PTR</strong>  </li>
+</ol>
+<blockquote>
+<p>0x550100 02000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 2</p>
+</blockquote>
+<ol start="8">
+<li><strong>WRITE_DAQ</strong>  </li>
+</ol>
+<blockquote>
+<p>0x550100 020000d0<br>DAQList Size = 1<br>addr = 0xd000 0002  </p>
+</blockquote>
+<ol start="9">
+<li><strong>SET_DAQ_PTR</strong></li>
+</ol>
+<blockquote>
+<p>0x550100 03000000<br>DAQList number = 1<br>ODTNum = 0<br>IDx = 3  </p>
+</blockquote>
+<ol start="10">
+<li><strong>WRITE_DAQ</strong>  </li>
+</ol>
+<blockquote>
+<p>0x550100 030000d0<br>DAQList Size = 1<br>addr = 0xd000 0003  </p>
+</blockquote>
+<ol start="11">
+<li><strong>START_STOP</strong>  </li>
+</ol>
+<blockquote>
+<p>0x550101 00016400<br>Command ：开始<br>DAQList number = 1<br>LastODT = 0<br>事件编号 ：1<br>周期（0064） ：10ms <em> 100 = 1S    这里的100，是因为在ECU中，ccpdaq(1)这个函数是每10ms调用一次，如果该函数1ms调用一次，则数据上传的周期为 1ms </em> 100 = 100ms</p>
+</blockquote>
 <p>经过上面一系列命令后，上位机接收到的数据为：<br><code>0x 3c 78 56 cd ad 00 00 00</code>,周期为1s<br>若要再添加数据，可以在DAQList1中更改ODTNum，循环使用3 - 10的命令，即可设置，只是要注意ODTNum的上限在<code>CCPPAR.H</code>中已经定义，不要超出</p>
 <p>由上面的栗子可知：<strong>数据周期与DAQList编号绑定，如果想要不同周期的数据，在发送start/stop命令时，同时更改DAQList编号和周期数据即可，当然相应的ECU中要有对该编号的<code>ccpdaq()</code>函数调用，其参数为DAQList编号。</strong>  </p>
 <h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>我的这次移植也没有完全使用CCP的所有功能，例如程序的烧写、数据传输过程中的CRC校验、主从设备连接之前的秘钥校验等几个功能就没有实现。但是有了这次移植的基础，后续如果需要相关的功能，应该能使用较短的时间实现。<br>源码中实际上还有一些数据类型转换不规范，导致编译器报警告，时间的原因就没有去处理。如果你恰巧看到了这篇文章也要做同样的事情，建议阅读源码之前多去看看源码包里的文档，对程序结构的梳理很有帮助。</p>
