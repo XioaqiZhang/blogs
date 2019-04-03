@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content>
+    <meta name="keyword" content>
+    <link rel="shortcut icon" href="/blogs/img/favicon.ico">
+
+    <title>
+        
+        FreeRTOS添加CPU使用率统计功能 - undefined
+        
+    </title>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/blogs/css/aircloud.css">
+    <link rel="stylesheet" href="/blogs/css/gitment.css">
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i>  </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar">
+            <img src="/blogs/img/dog.jpg">
+        </div>
+        <div class="name">
+            <i>No.7 ears</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li>
+                <a href="/blogs/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>主页</span>
+                </a>
+            </li>
+            <li>
+                <a href="/blogs/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>标签</span>
+                </a>
+            </li>
+            <li>
+                <a href="/blogs/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>存档</span>
+                </a>
+            </li>
+            <li>
+                <a href="/blogs/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>关于</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#原理"><span class="toc-text">原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#实现"><span class="toc-text">实现</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input">
+            <span id="begin-search">搜索</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+        <div class="index-about-mobile">
+            <i>  </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        FreeRTOS添加CPU使用率统计功能
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2019-04-03 20:14:05</span></span>
+        
+        
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+
+    </div>
+    <div class="post-content no-indent">
+        <p>FreeRTOS没有CPU使用率统计功能，在嵌入式系统设计中无法直观的评估CPU的使用情况，所以在此提供一种计算CPU使用率的方法。</p>
+<h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>此种方法计算CPU使用率原理为：<br>1.系统启动后，将所有任务都挂起，统计一段时间T（如1S）内空闲任务被调用的次数M，此时可认为这个次数是CPU占用率最小（接近0）时能够调用空闲任务的最大次数。<br>2.任务开始运行后，每隔一段时间T，记录空闲任务被调用的次数m。<br>3.CPU的占用率为：(1-m/M) * 100%</p>
+<p>这种方法的好处在于：可以忽略硬件中断所占用的时间。</p>
+<h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><ol>
+<li>你自己创建的文件 RtosTask.c<br>该函数的执行顺序：<br><div align="center"><img src="https://t1.picb.cc/uploads/2019/04/03/VFpNVW.png" width="20%" height="20%"></div></li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>滴答计数器值</th>
+<th>所做工作</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INIT</td>
+<td>0</td>
+<td>挂起系统任务</td>
+<td>等待挂起后的稳定状态</td>
+</tr>
+<tr>
+<td>FIRST_CNT</td>
+<td>200</td>
+<td>清空空闲任务计数器</td>
+<td>开始空闲任务计数</td>
+</tr>
+<tr>
+<td>FIRST_CALC</td>
+<td>700</td>
+<td>赋值空闲任务最大计数，恢复挂起任务，开启看门狗</td>
+<td>得到空闲任务计数最大值</td>
+</tr>
+<tr>
+<td>EVE_CNT</td>
+<td>701</td>
+<td>清空空闲任务计数器</td>
+<td>开始空闲任务计数</td>
+</tr>
+<tr>
+<td>EVE_CALC</td>
+<td>1201</td>
+<td>计算CPU使用率，跳转状态到EVE_CNT</td>
+<td>周期计算CPU使用率</td>
+</tr>
+</tbody>
+</table>
+<p>从上表可知，本程序中的固定时间T = 700 - 200  = 1201 - 701 = 500ms<br>下面是具体的程序：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">// 定义状态枚举类型</span><br><span class="line">typedef enum</span><br><span class="line">&#123;</span><br><span class="line"> E_INIT = 0u,</span><br><span class="line"> E_FIRST_CNT = 200u,</span><br><span class="line"> E_FIRST_CALC = 700u,</span><br><span class="line"> E_EVE_CNT = 701u,</span><br><span class="line"> E_EVE_CALC = 1201u</span><br><span class="line">&#125;E_USAGE_STATES;</span><br><span class="line"></span><br><span class="line">//定义计数变量</span><br><span class="line">UNSIGNED32 g_u32MaxIdleCnt = 0u;</span><br><span class="line">UNSIGNED32 g_u32IdleCnt = 0u;</span><br><span class="line">UNSIGNED32 g_u32TickCnt = 0u;</span><br><span class="line"></span><br><span class="line">// 定义滴答时钟钩子函数</span><br><span class="line">void vApplicationTickHook(void)</span><br><span class="line">&#123;</span><br><span class="line"> // CPU使用率计算 todo</span><br><span class="line"> switch(g_u32TickCnt)</span><br><span class="line"> &#123;</span><br><span class="line">  case E_INIT: //初始化，等待稳定</span><br><span class="line">  &#123;</span><br><span class="line">   //挂起三个系统任务   这里的参数是某个任务的句柄</span><br><span class="line">   vTaskSuspend(RTOS_GetOSTaskHandle(E_TASK_10MS));</span><br><span class="line">   vTaskSuspend(RTOS_GetOSTaskHandle(E_TASK_50MS));</span><br><span class="line">   vTaskSuspend(RTOS_GetOSTaskHandle(E_TASK_1MS));</span><br><span class="line"></span><br><span class="line">   break;</span><br><span class="line">  &#125;</span><br><span class="line">  case E_FIRST_CNT: //分母开始计数</span><br><span class="line">  &#123;</span><br><span class="line">   // 空闲任务计数值清空</span><br><span class="line">   g_u32IdleCnt = 0u;</span><br><span class="line"></span><br><span class="line">   break;</span><br><span class="line">  &#125;</span><br><span class="line">  case E_FIRST_CALC: //计算分母</span><br><span class="line">  &#123;</span><br><span class="line">   g_u32MaxIdleCnt = g_u32IdleCnt;</span><br><span class="line"></span><br><span class="line">   //恢复挂起的任务</span><br><span class="line">   vTaskResume(RTOS_GetOSTaskHandle(E_TASK_10MS));</span><br><span class="line">   vTaskResume(RTOS_GetOSTaskHandle(E_TASK_50MS));</span><br><span class="line">   vTaskResume(RTOS_GetOSTaskHandle(E_TASK_1MS));</span><br><span class="line"></span><br><span class="line">   //开启看门狗，该函数根据硬件平台自定义， 如果你的系统不需要看门狗，也没有喂狗操作，那么此条忽略</span><br><span class="line">   WatchDog_Enable();</span><br><span class="line"></span><br><span class="line">   break;</span><br><span class="line">  &#125;</span><br><span class="line">  case E_EVE_CNT: //正常计数开始</span><br><span class="line">  &#123;</span><br><span class="line">   // 空闲任务计数值清空</span><br><span class="line">   taskENTER_CRITICAL();</span><br><span class="line"></span><br><span class="line">   g_u32IdleCnt = 0u;</span><br><span class="line"></span><br><span class="line">   taskEXIT_CRITICAL();</span><br><span class="line"></span><br><span class="line">   break;</span><br><span class="line">  &#125;</span><br><span class="line">  case E_EVE_CALC: // 计算使用率</span><br><span class="line">  &#123;</span><br><span class="line">   dbgs_f32_cpu_usage_percent = (1.0f - (FLOAT32)g_u32IdleCnt / (FLOAT32)g_u32MaxIdleCnt) * 100.0f;</span><br><span class="line"></span><br><span class="line">   g_u32TickCnt = E_EVE_CNT - 1;</span><br><span class="line"></span><br><span class="line">   break;</span><br><span class="line">  &#125;</span><br><span class="line">  default:</span><br><span class="line">   break;</span><br><span class="line"> &#125;</span><br><span class="line"> g_u32TickCnt++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 定义空闲任务钩子函数</span><br><span class="line">void vApplicationIdleHook( void )</span><br><span class="line">&#123;</span><br><span class="line"> // 空闲任务计数</span><br><span class="line"> taskENTER_CRITICAL();</span><br><span class="line"></span><br><span class="line"> g_u32IdleCnt++;</span><br><span class="line"></span><br><span class="line"> taskEXIT_CRITICAL();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ol start="2">
+<li>FreeRTOSConfig.h</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// 将这两个宏开启，对应的钩子函数才会被调用</span><br><span class="line">#define configUSE_IDLE_HOOK   1</span><br><span class="line">#define configUSE_TICK_HOOK   1</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>main.c</li>
+</ol>
+<p>运行后，变量<code>dbgs_f32_cpu_usage_percent</code>的值就为当前系统CPU使用率。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">int main(void)</span><br><span class="line">&#123;</span><br><span class="line">    EVMCU50MS_TaskInit();</span><br><span class="line">    EVMCU1MS_TaskInit();</span><br><span class="line">    EVMCU10MS_TaskInit();</span><br><span class="line">    RTOS_TaskCreate(EVMCU10MS_TASK, EVMCU10MS_TaskHandler);</span><br><span class="line">    RTOS_TaskCreate(EVMCU50MS_TASK, EVMCU50MS_TaskHandler);</span><br><span class="line">    RTOS_TaskCreate(EVMCU1MS_TASK, EVMCU1MS_TaskHandler);</span><br><span class="line">    //开启调度器</span><br><span class="line">    RTOS_StartScheduler();</span><br><span class="line"></span><br><span class="line">    // While loop when the OS fail</span><br><span class="line">    while(TRUE)</span><br><span class="line">    &#123;</span><br><span class="line">       ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+        
+        <br>
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        
+        <li>
+            <a target="_blank" href="https://www.zhihu.com/people/�ȶ��Ƿ�">
+                            <span class="fa-stack fa-lg">
+                                 <i class="iconfont icon-zhihu"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+        <li>
+            <a target="_blank" href="http://weibo.com/603228547@qq.com">
+                            <span class="fa-stack fa-lg">
+                                  <i class="iconfont icon-weibo"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+        
+        <li>
+            <a target="_blank" href="https://github.com/XioaqiZhang">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-github"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+    </ul>
+    
+    <p>
+        <span id="busuanzi_container_site_pv">
+            <span id="busuanzi_value_site_pv"></span>PV
+        </span>
+        <span id="busuanzi_container_site_uv">
+            <span id="busuanzi_value_site_uv"></span>UV
+        </span>
+        Created By <a href="https://hexo.io/">Hexo</a>  Theme <a href="https://github.com/aircloud/hexo-theme-aircloud">AirCloud</a></p>
+</footer>
+
+
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = ""
+    window.hexo_root = "/blogs/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script src="/blogs/js/index.js"></script>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+</html>
