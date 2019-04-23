@@ -11,7 +11,7 @@
 
     <title>
         
-        
+        电动汽车电控系统预充 - undefined
         
     </title>
 
@@ -65,7 +65,7 @@
                     <span>标签</span>
                 </a>
             </li>
-            <li class="active">
+            <li>
                 <a href="/blogs/archives">
                     <i class="iconfont icon-guidang2"></i>
                     <span>存档</span>
@@ -80,6 +80,10 @@
             
         </ul>
     </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#为什么需要预冲电路"><span class="toc-text">为什么需要预冲电路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#预冲的解决方案"><span class="toc-text">预冲的解决方案</span></a></li></ol>
+</div>
     
 </div>
 
@@ -106,65 +110,37 @@
         
 
 
-<!-- 归档列表 -->
+<div class="post-container">
+    <div class="post-title">
+        电动汽车电控系统预充
+    </div>
 
-<div class="archives-container">
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2019-04-22 12:37:31</span></span>
+        
+        
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
 
-<div class="one-tag-list">
-                <span class="fa fa-calendar-times-o listing-seperator" id="2019">
-                    <span class="tag-text">2019</span>
-                </span>
-    <ul>
-        
-        <!-- <li class="listing-item">
-        <time datetime="{{ post.date | date:"%Y-%m-%d" }}">{{ post.date | date:"%Y-%m-%d" }}</time>
-        <a href="{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a>
-        </li> -->
-        <li>
-            <span>04-22</span>
-            <i class="fa fa-angle-double-right" aria-hidden="true"></i>
-            <a href="/blogs/2019/04/22/电动汽车电控系统预充/">
-                        <span>
-                            电动汽车电控系统预充
-                        </span>
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </li>
-        
-        <!-- <li class="listing-item">
-        <time datetime="{{ post.date | date:"%Y-%m-%d" }}">{{ post.date | date:"%Y-%m-%d" }}</time>
-        <a href="{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a>
-        </li> -->
-        <li>
-            <span>04-03</span>
-            <i class="fa fa-angle-double-right" aria-hidden="true"></i>
-            <a href="/blogs/2019/04/03/FreeRTOS添加CPU使用率统计功能/">
-                        <span>
-                            FreeRTOS添加CPU使用率统计功能
-                        </span>
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </li>
-        
-        <!-- <li class="listing-item">
-        <time datetime="{{ post.date | date:"%Y-%m-%d" }}">{{ post.date | date:"%Y-%m-%d" }}</time>
-        <a href="{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a>
-        </li> -->
-        <li>
-            <span>03-28</span>
-            <i class="fa fa-angle-double-right" aria-hidden="true"></i>
-            <a href="/blogs/2019/03/28/CCP踩坑记录/">
-                        <span>
-                            CCP踩坑记录
-                        </span>
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </li>
-        
+    </div>
+    <div class="post-content no-indent">
+        <h3 id="为什么需要预冲电路"><a href="#为什么需要预冲电路" class="headerlink" title="为什么需要预冲电路"></a>为什么需要预冲电路</h3><p>如图所示，动力电池所带的电机控制器负载，在前端都有一个大电容C，在冷态启动时，C上没有电压或只有很低的残留电压，当没有预充电时，主接触器K+、K-直接与C接通，此时电池电压VB有高压，而C上的电压接近0，相当于瞬间短路，此时的负载仅仅是导线和继电器触点的电阻，一般远小于20mΩ。根据欧姆定律，回路电阻按20mΩ计算，VB和VC之间的压差按300V计算，则瞬间电流<code>I = 300 / 0.02 = 15000A</code>，大电流必然导致继电器损坏。</p>
+<p><img src="https://t1.picb.cc/uploads/2019/04/23/VdeXfK.png" alt="VdeXfK.png"></p>
+<h3 id="预冲的解决方案"><a href="#预冲的解决方案" class="headerlink" title="预冲的解决方案"></a>预冲的解决方案</h3><p>加入预充电过程，在上电过程中，先不闭合K+，而是先将预冲继电器Kp闭合，预冲电阻一般选用100欧姆到200欧姆，VC与VB之间的压差仍然按300V计算，在接通瞬间的电流<code>I= 300/200 = 1.5A</code>，所以预冲回路是安全的。<br>预冲电路工作后，大电容C上的电压越来越大，VB与VC之间的压差越来越小，当VC足够接近VB时，切断预冲继电器Kp，接通主接触器K+，此时就不存在大电流冲击，因为<code>I= （VB - VC）/R</code>。<br>车辆上的接触器开关状态由VCU控制，一般上电过程预冲的处理有两种方案：</p>
+<p>1.接通K-和预冲继电器Kp，检测电机控制器母线端电压（VC）与动力电池电压（VB）的压差，当这个差值足够小，切断Kp，接通主接触器K+。<br>2.接通K-和预冲继电器Kp，延时一段时间t，然后切断Kp，接通主接触器K+。<br>那么时间t应该如何计算呢？<br>假设：<br>V0为电容上初始电压值<br>V1为电容最终可充/可放到的电压值<br>Vt则为t时刻电容上的电压值<br>那么符合公式：<br>Vt = V0 + （V1 - V0）<em>[1-exp(-t/RC)]<br>或<br>t = RC</em>Ln[(V1-V0)/(V1-Vt)]</p>
+<p>根据以上公式，假设我们要在VB为VC的90%（V0 = 0, V1= VC, Vt = 0.9VC）时结束预冲，闭合主接，那么预冲持续的时间t = RC * Ln(10)=2.3RC，<br>常用的R=200Ω，C=500μF，带入t= 230ms</p>
+<p>或者有一种更简单的计算办法，RC回路的时间常数τ = R<em> C，在充电时，每经过一个τ时间，电容器上的电压就上升0.632倍的(VB - VC)，那么粗略计算大约2τ~3τ左右的时间就可以让VB接近VC的90%了，也就是安全状态了，同样带入上面的数据：t=2.5τ = 2.5</em>R*C=250ms</p>
 
-    </ul>
-</div>
+        
+        <br>
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
 
+        <div id="lv-container">
+        </div>
+
+    </div>
 </div>
 
     </div>
@@ -229,7 +205,7 @@
     // We expose some of the variables needed by the front end
     window.hexo_search_path = ""
     window.hexo_root = "/blogs/"
-    window.isPost = false
+    window.isPost = true
 </script>
 <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 <script src="/blogs/js/index.js"></script>
